@@ -14,13 +14,12 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const adminToken = localStorage.getItem("adminToken");
-    const sellerToken = localStorage.getItem("token"); // Assuming seller also uses 'token' for now
-    const userRole = localStorage.getItem("userRole"); // Check if role is stored
+    const userRole = localStorage.getItem("userRole");
+    const token = localStorage.getItem("token");
 
-    if (adminToken) {
+    if (token && userRole === "admin") {
       router.push("/admin");
-    } else if (userRole === "seller") {
+    } else if (token && userRole === "seller") {
       router.push("/seller");
     } else {
       setLoading(false);

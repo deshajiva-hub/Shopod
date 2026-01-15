@@ -82,12 +82,12 @@ export default function UnifiedLoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden text-black">
                 {/* Header Section */}
-                <div className="bg-[#1877F2] p-8 text-center">
+                <div className={`${targetRole === 'seller' ? 'bg-primary' : 'bg-[#1877F2]'} p-8 text-center transition-colors duration-500`}>
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
                         <Lock className="text-white" size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-white">Shopod</h1>
-                    <p className="text-blue-100 text-sm mt-2">
+                    <p className="text-white/90 text-sm mt-2">
                         {targetRole === "admin" ? "Admin Access" : (targetRole === "seller" ? "Seller Partner" : "Welcome Back")}
                     </p>
                 </div>
@@ -105,7 +105,7 @@ export default function UnifiedLoginPage() {
                                     required
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition text-sm text-black"
+                                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${targetRole === 'seller' ? 'focus:ring-primary/20 focus:border-primary' : 'focus:ring-blue-500/20 focus:border-blue-500'} outline-none transition text-sm text-black`}
                                     placeholder="your@email.com"
                                 />
                             </div>
@@ -121,7 +121,7 @@ export default function UnifiedLoginPage() {
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition text-sm text-black"
+                                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${targetRole === 'seller' ? 'focus:ring-primary/20 focus:border-primary' : 'focus:ring-blue-500/20 focus:border-blue-500'} outline-none transition text-sm text-black`}
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -130,7 +130,7 @@ export default function UnifiedLoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#1877F2] hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition duration-200 flex items-center justify-center gap-2 group"
+                            className={`w-full ${targetRole === 'seller' ? 'bg-primary hover:bg-primary-dark' : 'bg-[#1877F2] hover:bg-blue-600'} text-white font-bold py-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 group shadow-lg shadow-current/10`}
                         >
                             {isLoading ? (
                                 <Loader2 size={20} className="animate-spin" />
