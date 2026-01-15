@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import SearchBar from "@/components/Searchbar/SearchBar";
+import SearchBar from "@/components/layout/Searchbar/SearchBar";
 import Link from 'next/link';
 import MobileBottomNav from "@/components/common/MobileBottomNav";
 

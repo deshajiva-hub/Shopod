@@ -1,6 +1,3 @@
-"use client";
-
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    // UI-only placeholder for protected routes
-    return <>{children}</>;
+export default function ProtectedRoute() {
+    return <div>ProtectedRoute Component</div>;
 }

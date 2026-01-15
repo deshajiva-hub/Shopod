@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import HeroSlider from "@/components/Banner/HeroSlider";
-import AllCategories from "@/components/Category/AllCategories";
-import FoodCategorySlider from "@/components/Food/FoodCategorySlider";
-import BenefitBar from "@/components/Features/BenefitBar";
-import Modal from "@/components/Modal";
+import HeroSlider from "@/components/home/Banner/HeroSlider";
+import AllCategories from "@/components/home/Category/AllCategories";
+import FoodCategorySlider from "@/components/home/Food/FoodCategorySlider";
+import BenefitBar from "@/components/home/Features/BenefitBar";
+import Modal from "@/components/ui/Modal";
 
 export default function HomePage() {
   const router = useRouter();
