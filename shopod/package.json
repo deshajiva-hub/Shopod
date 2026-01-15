@@ -1,0 +1,18 @@
+{
+    "name": "shopod-monorepo",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "apps/*"
+    ],
+    "scripts": {
+        "dev": "npm run dev -w apps/client -- -p 3000",
+        "build": "npm run build -w apps/client",
+        "install-all": "npm install"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4",
+        "tailwindcss": "^4",
+        "postcss": "^8"
+    }
+}
