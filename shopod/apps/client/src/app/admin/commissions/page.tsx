@@ -3,12 +3,10 @@ import React from "react";
 import {
     CreditCard,
     ArrowUpRight,
-    ShieldCheck,
     Settings,
-    LayoutGrid,
-    CheckCircle2,
     Clock,
-    Download
+    Download,
+    Bike
 } from "lucide-react";
 
 export default function CommissionsPage() {
