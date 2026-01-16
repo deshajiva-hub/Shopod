@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import AdminLayout from "@/components/admin/Layout/AdminLayout";
-import AuthGuard from "@/components/admin/Auth/AuthGuard";
+import RoleGuard from "@/components/common/Auth/RoleGuard";
 
 export default function DashboardLayout({
     children,
@@ -9,8 +9,8 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <AuthGuard>
+        <RoleGuard allowedRoles={["admin"]}>
             <AdminLayout>{children}</AdminLayout>
-        </AuthGuard>
+        </RoleGuard>
     );
 }

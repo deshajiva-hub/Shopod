@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -13,6 +13,7 @@ export default function UnifiedLoginPage() {
     const searchParams = useSearchParams();
     const dispatch = useDispatch();
     const [login, { isLoading }] = useLoginMutation();
+    const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -24,6 +25,31 @@ export default function UnifiedLoginPage() {
         const role = searchParams.get("role");
         if (role) setTargetRole(role);
     }, [searchParams]);
+
+    const contentMap: Record<string, { title: React.ReactNode; desc: string; color: string }> = {
+        admin: {
+            title: <>Admin <span className="text-red-600">Console</span></>,
+            desc: "Secure access for system administrators. Manage users, vendors, and platform settings.",
+            color: "bg-red-600"
+        },
+        seller: {
+            title: <>Seller <span className="text-blue-600">Dashboard</span></>,
+            desc: "Manage your inventory, track orders, and analyze your business growth.",
+            color: "bg-blue-600"
+        },
+        rider: {
+            title: <>Rider <span className="text-green-600">App</span></>,
+            desc: "View earnings, manage deliveries, and track your performance in real-time.",
+            color: "bg-green-600"
+        },
+        client: {
+            title: <>Welcome to <span className="text-[#6b4dd7]">Shopod</span></>,
+            desc: "Discover the best local products and get them delivered to your doorstep.",
+            color: "bg-[#6b4dd7]"
+        }
+    };
+
+    const activeText = contentMap[targetRole] || contentMap.client;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -97,13 +123,18 @@ export default function UnifiedLoginPage() {
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#ffffff_0%,#f4f1fb_45%,#f6f6fb_100%)] px-4 py-10 sm:px-6 sm:py-12 flex items-center">
             <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] ">
                 <section className="text-center lg:text-left">
-                    <h1 className="text-3xl font-semibold leading-tight text-[#262626] md:text-5xl">
-                        Sign In to
-                        <br />
-                        Shopod
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 mb-6 transition-all duration-300`}>
+                        <span className={`w-2 h-2 rounded-full ${activeText.color}`}></span>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{targetRole} Access</span>
+                    </div>
+                    <h1 className="text-4xl font-black leading-tight text-[#262626] md:text-6xl tracking-tighter transition-all duration-300">
+                        {activeText.title}
                     </h1>
-                    <p className="mt-6 text-base text-[#8b8b93]">
-                        If you don&apos;t have an account
+                    <p className="mt-6 text-lg text-[#8b8b93] font-medium max-w-md transition-all duration-300">
+                        {activeText.desc}
+                    </p>
+                    <p className="mt-2 text-sm text-[#8b8b93]">
+                        Don&apos;t have an account?
                     </p>
                     <p className="text-base text-[#8b8b93]">
                         You can{" "}
@@ -133,33 +164,24 @@ export default function UnifiedLoginPage() {
                                     className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
                                 />
                             </label>
-                            <label className="flex items-center gap-3 rounded-[18px] border border-transparent bg-[#f2f3f7] px-4 py-4 focus-within:border-[#6b4dd7]/40 cursor-pointer">
+                            <div className="flex items-center gap-3 rounded-[18px] border border-transparent bg-[#f2f3f7] px-4 py-4 focus-within:border-[#6b4dd7]/40 transition-colors">
                                 <input
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
                                     placeholder="Password"
                                     className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
                                 />
-                                <span className="text-[#a1a1aa]" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
-                                        <path
-                                            d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                        />
-                                        <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-                                        <path
-                                            d="M4 4l16 16"
-                                            stroke="currentColor"
-                                            strokeWidth="1.5"
-                                            strokeLinecap="round"
-                                        />
-                                    </svg>
-                                </span>
-                            </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="text-[#a1a1aa] hover:text-[#6b4dd7] transition-colors focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                             <div className="mt-2 text-right text-sm text-[#8b8b93]">
                                 Forgot password?
                             </div>
@@ -172,12 +194,12 @@ export default function UnifiedLoginPage() {
                             </button>
                         </form>
 
-                        <div className="my-6 flex items-center gap-3 text-sm text-[#8b8b93]">
+                        {/* <div className="my-6 flex items-center gap-3 text-sm text-[#8b8b93]">
                             <span className="h-px flex-1 bg-[#e5e6ec]" />
                             Or continue with
                             <span className="h-px flex-1 bg-[#e5e6ec]" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        </div> */}
+                        {/* <div className="grid grid-cols-2 gap-4">
                             <button
                                 className="flex h-14 items-center justify-center rounded-[18px] border border-[#e5e6ec] bg-white shadow-[0_8px_20px_rgba(28,24,60,0.08)] cursor-pointer"
                                 aria-label="Continue with Google"
@@ -216,7 +238,7 @@ export default function UnifiedLoginPage() {
                                     />
                                 </svg>
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </section>
             </div>

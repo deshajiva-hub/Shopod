@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
     ChevronLeft,
     Store,
@@ -15,7 +15,8 @@ import {
     DollarSign,
     ExternalLink,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Percent
 } from "lucide-react";
 
 const MOCK_VENDOR = {
@@ -40,9 +41,9 @@ const MOCK_PRODUCTS = [
     { id: "PRD-003", name: "Garlic Breadsticks", category: "Sides", price: "$5.99", stock: 200, status: "Active" },
 ];
 
-export default function VendorDetailPage() {
-    const { id } = useParams();
+export default function VendorDetailPage({ params }: { params: { id: string } }) {
     const router = useRouter();
+    const { id } = params;
     const [activeTab, setActiveTab] = useState<"products" | "orders" | "earnings">("products");
 
     return (
@@ -174,8 +175,8 @@ export default function VendorDetailPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
                                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab.id
-                                        ? "bg-white text-[#1877F2] shadow-sm"
-                                        : "text-gray-500 hover:text-gray-900"
+                                    ? "bg-white text-[#1877F2] shadow-sm"
+                                    : "text-gray-500 hover:text-gray-900"
                                     }`}
                             >
                                 {tab.icon}

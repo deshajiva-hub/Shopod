@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import VendorTable, { Vendor } from "@/components/admin/vendors/VendorTable";
 import VendorFilters from "@/components/admin/vendors/VendorFilters";
 import { Download, Plus, Store, Users, Clock, Percent } from "lucide-react";
@@ -97,9 +98,9 @@ export default function VendorsPage() {
                     <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
                         <Download size={18} className="text-gray-400" /> Export Partners
                     </button>
-                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1877F2] rounded-xl text-sm font-bold text-white hover:bg-[#166fe5] transition-all shadow-lg shadow-blue-100">
+                    <Link href="/admin/vendors/new" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1877F2] rounded-xl text-sm font-bold text-white hover:bg-[#166fe5] transition-all shadow-lg shadow-blue-100">
                         <Plus size={18} /> Add Vendor
-                    </button>
+                    </Link>
                 </div>
             </div>
 
