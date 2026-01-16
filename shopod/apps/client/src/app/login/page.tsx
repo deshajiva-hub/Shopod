@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Lock, Mail, Loader2, ArrowRight, Shield, ShoppingBag, User } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/features/userSlice";
@@ -31,6 +32,17 @@ export default function UnifiedLoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        const credentialRole =
+            formData.email === "admin@shopod.com" && formData.password === "admin123"
+                ? "admin"
+                : formData.email === "seller@shopod.com" && formData.password === "seller123"
+                    ? "seller"
+                    : formData.email === "user@shopod.com" && formData.password === "user123"
+                        ? "client"
+                        : formData.email === "rider@shopod.com" && formData.password === "rider123"
+                            ? "rider"
+                            : null;
+
         try {
             // In a real app, this would be a real API call
             // For now, let's simulate role-based login logic
@@ -42,7 +54,7 @@ export default function UnifiedLoginPage() {
             const result = await login(formData).unwrap();
 
             // Assume the backend returns role, if not we use targetRole for now
-            const role = (result as any).role || targetRole;
+            const role = credentialRole || (result as any).role || targetRole;
 
             dispatch(setUser({
                 user: { email: formData.email },
@@ -58,12 +70,10 @@ export default function UnifiedLoginPage() {
             else router.push("/");
 
         } catch (err: any) {
-            toast.error(err?.data?.message || "Login failed. Please try again.");
-
             // Fallback mock for development if API is not ready
-            if (process.env.NODE_ENV === "development") {
+            if (process.env.NODE_ENV === "development" && credentialRole) {
                 console.warn("Using mock login for development");
-                const mockRole = formData.email.includes("admin") ? "admin" : (formData.email.includes("seller") ? "seller" : "client");
+                const mockRole = credentialRole;
 
                 dispatch(setUser({
                     user: { email: formData.email },
@@ -71,123 +81,144 @@ export default function UnifiedLoginPage() {
                     role: mockRole as any
                 }));
 
+                toast.success("Login successful!");
+
                 if (mockRole === "admin") router.push("/admin");
                 else if (mockRole === "seller") router.push("/seller");
                 else router.push("/");
+                return;
             }
+
+            toast.error(err?.data?.message || "Login failed. Please try again.");
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden text-black">
-                {/* Header Section */}
-                <div className={`${targetRole === 'seller' ? 'bg-primary' : 'bg-[#1877F2]'} p-8 text-center transition-colors duration-500`}>
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                        <Lock className="text-white" size={32} />
-                    </div>
-                    <h1 className="text-2xl font-bold text-white">Shopod</h1>
-                    <p className="text-white/90 text-sm mt-2">
-                        {targetRole === "admin" ? "Admin Access" : (targetRole === "seller" ? "Seller Partner" : "Welcome Back")}
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#ffffff_0%,#f4f1fb_45%,#f6f6fb_100%)] px-4 py-10 sm:px-6 sm:py-12 flex items-center">
+            <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] ">
+                <section className="text-center lg:text-left">
+                    <h1 className="text-3xl font-semibold leading-tight text-[#262626] md:text-5xl">
+                        Sign In to
+                        <br />
+                        Shopod
+                    </h1>
+                    <p className="mt-6 text-base text-[#8b8b93]">
+                        If you don&apos;t have an account
                     </p>
-                </div>
+                    <p className="text-base text-[#8b8b93]">
+                        You can{" "}
+                        <Link className="font-semibold text-[#6b4dd7]" href="/signup">
+                            Register here!
+                        </Link>
+                    </p>
 
-                {/* Form Section */}
-                <div className="p-8">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <div className="mt-10 flex flex-col items-center gap-8 sm:flex-row sm:justify-center lg:justify-start">
+                        <div aria-hidden="true">
+                            <img src="/Demoo.png" alt="" />
+                        </div>
+                    </div>
+                </section>
+
+                <section className="flex justify-center lg:justify-end">
+                    <div className="w-full max-w-105 rounded-4xl bg-white p-6 shadow-[0_18px_40px_rgba(68,54,128,0.15)] sm:p-8">
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                            <label className="flex items-center gap-3 rounded-[18px] border border-transparent bg-[#f2f3f7] px-4 py-4 focus-within:border-[#6b4dd7]/40 cursor-pointer">
                                 <input
                                     name="email"
-                                    type="email"
+                                    type="text"
                                     required
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${targetRole === 'seller' ? 'focus:ring-primary/20 focus:border-primary' : 'focus:ring-blue-500/20 focus:border-blue-500'} outline-none transition text-sm text-black`}
-                                    placeholder="your@email.com"
+                                    placeholder="Enter email or Phone number"
+                                    className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
                                 />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            </label>
+                            <label className="flex items-center gap-3 rounded-[18px] border border-transparent bg-[#f2f3f7] px-4 py-4 focus-within:border-[#6b4dd7]/40 cursor-pointer">
                                 <input
                                     name="password"
                                     type="password"
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${targetRole === 'seller' ? 'focus:ring-primary/20 focus:border-primary' : 'focus:ring-blue-500/20 focus:border-blue-500'} outline-none transition text-sm text-black`}
-                                    placeholder="••••••••"
+                                    placeholder="Password"
+                                    className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
                                 />
+                                <span className="text-[#a1a1aa]" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+                                        <path
+                                            d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z"
+                                            stroke="currentColor"
+                                            strokeWidth="1.5"
+                                        />
+                                        <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                                        <path
+                                            d="M4 4l16 16"
+                                            stroke="currentColor"
+                                            strokeWidth="1.5"
+                                            strokeLinecap="round"
+                                        />
+                                    </svg>
+                                </span>
+                            </label>
+                            <div className="mt-2 text-right text-sm text-[#8b8b93]">
+                                Forgot password?
                             </div>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="inline-flex w-full items-center justify-center rounded-2xl bg-[#6b4dd7] px-4 py-3 text-base font-semibold text-white shadow-[0_10px_24px_rgba(107,77,215,0.25)] transition hover:-translate-y-0.5 hover:bg-[#5338b4] disabled:cursor-not-allowed disabled:opacity-70 sm:py-4 sm:text-lg"
+                            >
+                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Sign In"}
+                            </button>
+                        </form>
+
+                        <div className="my-6 flex items-center gap-3 text-sm text-[#8b8b93]">
+                            <span className="h-px flex-1 bg-[#e5e6ec]" />
+                            Or continue with
+                            <span className="h-px flex-1 bg-[#e5e6ec]" />
                         </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                className="flex h-14 items-center justify-center rounded-[18px] border border-[#e5e6ec] bg-white shadow-[0_8px_20px_rgba(28,24,60,0.08)] cursor-pointer"
+                                aria-label="Continue with Google"
+                                type="button"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-6 w-6">
+                                    <path
+                                        d="M21.8 12.2c0-.7-.1-1.3-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.3c2-1.8 3-4.5 3-7.5z"
+                                        fill="#4285F4"
+                                    />
+                                    <path
+                                        d="M12 22c2.7 0 4.9-.9 6.6-2.4l-3.3-2.6c-.9.6-2.1 1-3.3 1-2.5 0-4.6-1.7-5.3-4H3.2v2.7A10 10 0 0 0 12 22z"
+                                        fill="#34A853"
+                                    />
+                                    <path
+                                        d="M6.7 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.3H3.2A10 10 0 0 0 2 12c0 1.7.4 3.3 1.2 4.7L6.7 14z"
+                                        fill="#FBBC05"
+                                    />
+                                    <path
+                                        d="M12 5.8c1.5 0 2.9.5 3.9 1.6l2.9-2.9A9.7 9.7 0 0 0 12 2 10 10 0 0 0 3.2 7.3l3.5 2.7c.7-2.3 2.8-4.2 5.3-4.2z"
+                                        fill="#EA4335"
+                                    />
+                                </svg>
+                            </button>
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full ${targetRole === 'seller' ? 'bg-primary hover:bg-primary-dark' : 'bg-[#1877F2] hover:bg-blue-600'} text-white font-bold py-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 group shadow-lg shadow-current/10`}
-                        >
-                            {isLoading ? (
-                                <Loader2 size={20} className="animate-spin" />
-                            ) : (
-                                <>
-                                    Sign In <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    {/* Development Role Switcher & Credentials */}
-                    {process.env.NODE_ENV === "development" && (
-                        <div className="mt-8 pt-6 border-t border-gray-100">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center mb-4">Development Environment</p>
-                            <div className="flex gap-2 mb-6">
-                                {[
-                                    { id: 'admin', icon: Shield, label: 'Admin', color: 'bg-red-50 text-red-600 border-red-100' },
-                                    { id: 'seller', icon: ShoppingBag, label: 'Seller', color: 'bg-orange-50 text-orange-600 border-orange-100' },
-                                    { id: 'client', icon: User, label: 'Client', color: 'bg-blue-50 text-blue-600 border-blue-100' }
-                                ].map((role) => (
-                                    <button
-                                        key={role.id}
-                                        type="button"
-                                        onClick={() => setTargetRole(role.id)}
-                                        className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${targetRole === role.id ? role.color + ' border-current scale-105' : 'bg-gray-50 text-gray-400 border-transparent hover:bg-gray-100'}`}
-                                    >
-                                        <role.icon size={16} />
-                                        <span className="text-[10px] font-bold">{role.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Test Credentials</p>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center text-[11px]">
-                                        <span className="font-bold text-gray-600">Admin:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-red-600">admin@shopod.com / admin123</code>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[11px]">
-                                        <span className="font-bold text-gray-600">Seller:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-orange-600">seller@shopod.com / seller123</code>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[11px]">
-                                        <span className="font-bold text-gray-600">User:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-blue-600">user@shopod.com / user123</code>
-                                    </div>
-                                </div>
-                            </div>
+                            <button
+                                className="flex h-14 items-center justify-center rounded-[18px] border border-[#e5e6ec] bg-white shadow-[0_8px_20px_rgba(28,24,60,0.08)] cursor-pointer"
+                                aria-label="Continue with Facebook"
+                                type="button"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+                                    <circle cx="12" cy="12" r="10" fill="#1877F2" />
+                                    <path
+                                        d="M13.1 7.6h2V5.1c-.3 0-1.4-.1-2.6-.1-2.6 0-4.3 1.6-4.3 4.5v2.1H5.9v2.8h2.3v4.5h3.2v-4.5h2.4l.4-2.8h-2.8V9.9c0-1 .3-1.7 1.7-1.7z"
+                                        fill="#ffffff"
+                                    />
+                                </svg>
+                            </button>
                         </div>
-                    )}
-
-                    <div className="mt-8 text-center text-xs text-gray-400">
-                        &copy; 2026 Shopod Inc. All rights reserved.
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     );
