@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface UserState {
     user: any | null;
     token: string | null;
-    role: "admin" | "seller" | "client" | null;
+    role: "admin" | "seller" | "client" | "rider" | null;
     isAuthenticated: boolean;
 }
 

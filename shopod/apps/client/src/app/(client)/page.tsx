@@ -21,6 +21,8 @@ export default function HomePage() {
       router.push("/admin");
     } else if (token && userRole === "seller") {
       router.push("/seller");
+    } else if (token && userRole === "rider") {
+      router.push("/rider");
     } else {
       setLoading(false);
     }
@@ -47,7 +49,6 @@ export default function HomePage() {
         isOpen={open}
         onClose={() => setOpen(false)}
         title="Shopod Offer"
-        position="center"
         size="md"
       >
         <p className="text-gray-700">

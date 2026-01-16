@@ -34,6 +34,9 @@ export default function RiderFilters({ onSearch, onFilterChange }: RiderFiltersP
                             <option value="Delhi">Delhi</option>
                             <option value="Bangalore">Bangalore</option>
                             <option value="Pune">Pune</option>
+                            <option value="Kolkata">Kolkata</option>
+                            <option value="Hyderabad">Hyderabad</option>
+                            <option value="Chennai">Chennai</option>
                         </select>
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                     </div>

@@ -1,6 +1,15 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
-import { Lock, Mail, Loader2, ArrowRight, Shield, ShoppingBag, User } from "lucide-react";
+import {
+    Lock,
+    Mail,
+    Loader2,
+    ArrowRight,
+    Shield,
+    ShoppingBag,
+    User,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/features/userSlice";
@@ -11,13 +20,18 @@ export default function UnifiedLoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const dispatch = useDispatch();
+
     const [login, { isLoading }] = useLoginMutation();
+
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
 
-    const [targetRole, setTargetRole] = useState(searchParams.get("role") || "client");
+    // role from URL or dev switch
+    const [targetRole, setTargetRole] = useState<string>(
+        searchParams.get("role") || "client"
+    );
 
     useEffect(() => {
         const role = searchParams.get("role");
@@ -28,52 +42,69 @@ export default function UnifiedLoginPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const resolveRole = (backendRole?: string) => {
+        // 1. If backend returns a specific role (not just 'user'/'client'), use it
+        if (backendRole && backendRole !== "user" && backendRole !== "client") {
+            return backendRole;
+        }
+
+        // 2. Fallback to smart email detection
+        const email = formData.email.toLowerCase();
+        if (email.includes("admin")) return "admin";
+        if (email.includes("seller")) return "seller";
+        if (email.includes("rider")) return "rider";
+
+        // 3. Fallback to targetRole from UI
+        return targetRole;
+    };
+
+    const redirectByRole = (role: string) => {
+        if (role === "admin") router.push("/admin");
+        else if (role === "seller") router.push("/seller");
+        else if (role === "rider") router.push("/rider");
+        else router.push("/");
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-            // In a real app, this would be a real API call
-            // For now, let's simulate role-based login logic
-            // In production, the backend might return the role in the JWT or response
+            const result: any = await login(formData).unwrap();
 
-            // Mocking the API response based on specific emails for demo/dev purposes
-            // Or just allow any login for now and assign role based on targetRole
+            const role = resolveRole(result?.role);
 
-            const result = await login(formData).unwrap();
-
-            // Assume the backend returns role, if not we use targetRole for now
-            const role = (result as any).role || targetRole;
-
-            dispatch(setUser({
-                user: { email: formData.email },
-                token: result.token,
-                role: role as any
-            }));
+            dispatch(
+                setUser({
+                    user: { email: formData.email },
+                    token: result.token,
+                    role: role as any,
+                })
+            );
 
             toast.success("Login successful!");
 
-            // Redirect based on role
-            if (role === "admin") router.push("/admin");
-            else if (role === "seller") router.push("/seller");
-            else router.push("/");
-
+            const redirectPath = searchParams.get("redirect");
+            if (redirectPath) {
+                router.push(redirectPath);
+            } else {
+                redirectByRole(role);
+            }
         } catch (err: any) {
-            toast.error(err?.data?.message || "Login failed. Please try again.");
+            toast.error(err?.data?.message || "Login failed. Using dev login.");
 
-            // Fallback mock for development if API is not ready
+            // 🔥 DEV FALLBACK LOGIN
             if (process.env.NODE_ENV === "development") {
-                console.warn("Using mock login for development");
-                const mockRole = formData.email.includes("admin") ? "admin" : (formData.email.includes("seller") ? "seller" : "client");
+                const role = targetRole;
 
-                dispatch(setUser({
-                    user: { email: formData.email },
-                    token: "mock-token-" + Date.now(),
-                    role: mockRole as any
-                }));
+                dispatch(
+                    setUser({
+                        user: { email: formData.email },
+                        token: "mock-token-" + Date.now(),
+                        role: role as any,
+                    })
+                );
 
-                if (mockRole === "admin") router.push("/admin");
-                else if (mockRole === "seller") router.push("/seller");
-                else router.push("/");
+                redirectByRole(role);
             }
         }
     };
@@ -81,103 +112,137 @@ export default function UnifiedLoginPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden text-black">
-                {/* Header Section */}
-                <div className={`${targetRole === 'seller' ? 'bg-primary' : 'bg-[#1877F2]'} p-8 text-center transition-colors duration-500`}>
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                {/* HEADER */}
+                <div
+                    className={`${targetRole === "seller"
+                        ? "bg-primary"
+                        : targetRole === "rider"
+                            ? "bg-green-600"
+                            : "bg-[#1877F2]"
+                        } p-8 text-center transition-colors`}
+                >
+                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Lock className="text-white" size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-white">Shopod</h1>
                     <p className="text-white/90 text-sm mt-2">
-                        {targetRole === "admin" ? "Admin Access" : (targetRole === "seller" ? "Seller Partner" : "Welcome Back")}
+                        {targetRole === "admin"
+                            ? "Admin Access"
+                            : targetRole === "seller"
+                                ? "Seller Partner"
+                                : targetRole === "rider"
+                                    ? "Delivery Partner"
+                                    : "Welcome Back"}
                     </p>
                 </div>
 
-                {/* Form Section */}
+                {/* FORM */}
                 <div className="p-8">
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* EMAIL */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                Email
+                            </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <Mail
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                    size={18}
+                                />
                                 <input
                                     name="email"
                                     type="email"
                                     required
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${targetRole === 'seller' ? 'focus:ring-primary/20 focus:border-primary' : 'focus:ring-blue-500/20 focus:border-blue-500'} outline-none transition text-sm text-black`}
-                                    placeholder="your@email.com"
+                                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
                                 />
                             </div>
                         </div>
 
+                        {/* PASSWORD */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                Password
+                            </label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <Lock
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                    size={18}
+                                />
                                 <input
                                     name="password"
                                     type="password"
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${targetRole === 'seller' ? 'focus:ring-primary/20 focus:border-primary' : 'focus:ring-blue-500/20 focus:border-blue-500'} outline-none transition text-sm text-black`}
-                                    placeholder="••••••••"
+                                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
                                 />
                             </div>
                         </div>
 
+                        {/* SUBMIT */}
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`w-full ${targetRole === 'seller' ? 'bg-primary hover:bg-primary-dark' : 'bg-[#1877F2] hover:bg-blue-600'} text-white font-bold py-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 group shadow-lg shadow-current/10`}
+                            className={`w-full ${targetRole === "seller"
+                                ? "bg-primary"
+                                : targetRole === "rider"
+                                    ? "bg-green-600"
+                                    : "bg-[#1877F2]"
+                                } text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2`}
                         >
                             {isLoading ? (
-                                <Loader2 size={20} className="animate-spin" />
+                                <Loader2 className="animate-spin" />
                             ) : (
                                 <>
-                                    Sign In <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    Sign In <ArrowRight size={18} />
                                 </>
                             )}
                         </button>
                     </form>
 
-                    {/* Development Role Switcher & Credentials */}
+                    {/* DEV ROLE SWITCH */}
                     {process.env.NODE_ENV === "development" && (
-                        <div className="mt-8 pt-6 border-t border-gray-100">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center mb-4">Development Environment</p>
-                            <div className="flex gap-2 mb-6">
+                        <div className="mt-8 border-t pt-6">
+                            <p className="text-[10px] text-gray-400 font-bold text-center mb-4">
+                                DEVELOPMENT ROLE SWITCH
+                            </p>
+                            <div className="flex gap-2">
                                 {[
-                                    { id: 'admin', icon: Shield, label: 'Admin', color: 'bg-red-50 text-red-600 border-red-100' },
-                                    { id: 'seller', icon: ShoppingBag, label: 'Seller', color: 'bg-orange-50 text-orange-600 border-orange-100' },
-                                    { id: 'client', icon: User, label: 'Client', color: 'bg-blue-50 text-blue-600 border-blue-100' }
-                                ].map((role) => (
+                                    { id: "admin", icon: Shield },
+                                    { id: "seller", icon: ShoppingBag },
+                                    { id: "rider", icon: Shield },
+                                    { id: "client", icon: User },
+                                ].map((r) => (
                                     <button
-                                        key={role.id}
-                                        type="button"
-                                        onClick={() => setTargetRole(role.id)}
-                                        className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${targetRole === role.id ? role.color + ' border-current scale-105' : 'bg-gray-50 text-gray-400 border-transparent hover:bg-gray-100'}`}
+                                        key={r.id}
+                                        onClick={() => setTargetRole(r.id)}
+                                        className={`flex-1 p-2 rounded-lg border ${targetRole === r.id
+                                            ? "bg-blue-50 border-blue-400 text-blue-600"
+                                            : "bg-gray-50 text-gray-400"
+                                            }`}
                                     >
-                                        <role.icon size={16} />
-                                        <span className="text-[10px] font-bold">{role.label}</span>
+                                        <r.icon size={16} />
+                                        <div className="text-[10px] font-bold">{r.id}</div>
                                     </button>
                                 ))}
                             </div>
 
-                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 mt-6">
                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Test Credentials</p>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between items-center text-[11px]">
+                                    <div className="flex justify-between items-center text-[10px]">
                                         <span className="font-bold text-gray-600">Admin:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-red-600">admin@shopod.com / admin123</code>
+                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-red-600">admin@shopod.com</code>
                                     </div>
-                                    <div className="flex justify-between items-center text-[11px]">
+                                    <div className="flex justify-between items-center text-[10px]">
+                                        <span className="font-bold text-gray-600">Rider:</span>
+                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-green-600">rider@shopod.com</code>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[10px]">
                                         <span className="font-bold text-gray-600">Seller:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-orange-600">seller@shopod.com / seller123</code>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[11px]">
-                                        <span className="font-bold text-gray-600">User:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-blue-600">user@shopod.com / user123</code>
+                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-orange-600">seller@shopod.com</code>
                                     </div>
                                 </div>
                             </div>
@@ -185,7 +250,7 @@ export default function UnifiedLoginPage() {
                     )}
 
                     <div className="mt-8 text-center text-xs text-gray-400">
-                        &copy; 2026 Shopod Inc. All rights reserved.
+                        © 2026 Shopod Inc.
                     </div>
                 </div>
             </div>
