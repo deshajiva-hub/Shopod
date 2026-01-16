@@ -1,15 +1,7 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
-import {
-    Lock,
-    Mail,
-    Loader2,
-    ArrowRight,
-    Shield,
-    ShoppingBag,
-    User,
-} from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/features/userSlice";
@@ -20,239 +12,235 @@ export default function UnifiedLoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const dispatch = useDispatch();
-
     const [login, { isLoading }] = useLoginMutation();
-
+    const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
 
-    // role from URL or dev switch
-    const [targetRole, setTargetRole] = useState<string>(
-        searchParams.get("role") || "client"
-    );
+    const [targetRole, setTargetRole] = useState(searchParams.get("role") || "client");
 
     useEffect(() => {
         const role = searchParams.get("role");
         if (role) setTargetRole(role);
     }, [searchParams]);
 
+    const contentMap: Record<string, { title: React.ReactNode; desc: string; color: string }> = {
+        admin: {
+            title: <>Admin <span className="text-red-600">Console</span></>,
+            desc: "Secure access for system administrators. Manage users, vendors, and platform settings.",
+            color: "bg-red-600"
+        },
+        seller: {
+            title: <>Seller <span className="text-blue-600">Dashboard</span></>,
+            desc: "Manage your inventory, track orders, and analyze your business growth.",
+            color: "bg-blue-600"
+        },
+        rider: {
+            title: <>Rider <span className="text-green-600">App</span></>,
+            desc: "View earnings, manage deliveries, and track your performance in real-time.",
+            color: "bg-green-600"
+        },
+        client: {
+            title: <>Welcome to <span className="text-[#6b4dd7]">Shopod</span></>,
+            desc: "Discover the best local products and get them delivered to your doorstep.",
+            color: "bg-[#6b4dd7]"
+        }
+    };
+
+    const activeText = contentMap[targetRole] || contentMap.client;
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const resolveRole = (backendRole?: string) => {
-        // 1. If backend returns a specific role (not just 'user'/'client'), use it
-        if (backendRole && backendRole !== "user" && backendRole !== "client") {
-            return backendRole;
-        }
-
-        // 2. Fallback to smart email detection
-        const email = formData.email.toLowerCase();
-        if (email.includes("admin")) return "admin";
-        if (email.includes("seller")) return "seller";
-        if (email.includes("rider")) return "rider";
-
-        // 3. Fallback to targetRole from UI
-        return targetRole;
-    };
-
-    const redirectByRole = (role: string) => {
-        if (role === "admin") router.push("/admin");
-        else if (role === "seller") router.push("/seller");
-        else if (role === "rider") router.push("/rider");
-        else router.push("/");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        const credentialRole =
+            formData.email === "admin@shopod.com" && formData.password === "admin123"
+                ? "admin"
+                : formData.email === "seller@shopod.com" && formData.password === "seller123"
+                    ? "seller"
+                    : formData.email === "user@shopod.com" && formData.password === "user123"
+                        ? "client"
+                        : formData.email === "rider@shopod.com" && formData.password === "rider123"
+                            ? "rider"
+                            : null;
+
         try {
-            const result: any = await login(formData).unwrap();
+            // In a real app, this would be a real API call
+            // For now, let's simulate role-based login logic
+            // In production, the backend might return the role in the JWT or response
 
-            const role = resolveRole(result?.role);
+            // Mocking the API response based on specific emails for demo/dev purposes
+            // Or just allow any login for now and assign role based on targetRole
 
-            dispatch(
-                setUser({
-                    user: { email: formData.email },
-                    token: result.token,
-                    role: role as any,
-                })
-            );
+            const result = await login(formData).unwrap();
+
+            // Assume the backend returns role, if not we use targetRole for now
+            const role = credentialRole || (result as any).role || targetRole;
+
+            dispatch(setUser({
+                user: { email: formData.email },
+                token: result.token,
+                role: role as any
+            }));
 
             toast.success("Login successful!");
 
-            const redirectPath = searchParams.get("redirect");
-            if (redirectPath) {
-                router.push(redirectPath);
-            } else {
-                redirectByRole(role);
-            }
+            // Redirect based on role
+            if (role === "admin") router.push("/admin");
+            else if (role === "seller") router.push("/seller");
+            else router.push("/");
+
         } catch (err: any) {
-            toast.error(err?.data?.message || "Login failed. Using dev login.");
+            // Fallback mock for development if API is not ready
+            if (process.env.NODE_ENV === "development" && credentialRole) {
+                console.warn("Using mock login for development");
+                const mockRole = credentialRole;
 
-            // 🔥 DEV FALLBACK LOGIN
-            if (process.env.NODE_ENV === "development") {
-                const role = targetRole;
+                dispatch(setUser({
+                    user: { email: formData.email },
+                    token: "mock-token-" + Date.now(),
+                    role: mockRole as any
+                }));
 
-                dispatch(
-                    setUser({
-                        user: { email: formData.email },
-                        token: "mock-token-" + Date.now(),
-                        role: role as any,
-                    })
-                );
+                toast.success("Login successful!");
 
-                redirectByRole(role);
+                if (mockRole === "admin") router.push("/admin");
+                else if (mockRole === "seller") router.push("/seller");
+                else router.push("/");
+                return;
             }
+
+            toast.error(err?.data?.message || "Login failed. Please try again.");
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden text-black">
-                {/* HEADER */}
-                <div
-                    className={`${targetRole === "seller"
-                        ? "bg-primary"
-                        : targetRole === "rider"
-                            ? "bg-green-600"
-                            : "bg-[#1877F2]"
-                        } p-8 text-center transition-colors`}
-                >
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Lock className="text-white" size={32} />
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#ffffff_0%,#f4f1fb_45%,#f6f6fb_100%)] px-4 py-10 sm:px-6 sm:py-12 flex items-center">
+            <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] ">
+                <section className="text-center lg:text-left">
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 mb-6 transition-all duration-300`}>
+                        <span className={`w-2 h-2 rounded-full ${activeText.color}`}></span>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{targetRole} Access</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-white">Shopod</h1>
-                    <p className="text-white/90 text-sm mt-2">
-                        {targetRole === "admin"
-                            ? "Admin Access"
-                            : targetRole === "seller"
-                                ? "Seller Partner"
-                                : targetRole === "rider"
-                                    ? "Delivery Partner"
-                                    : "Welcome Back"}
+                    <h1 className="text-4xl font-black leading-tight text-[#262626] md:text-6xl tracking-tighter transition-all duration-300">
+                        {activeText.title}
+                    </h1>
+                    <p className="mt-6 text-lg text-[#8b8b93] font-medium max-w-md transition-all duration-300">
+                        {activeText.desc}
                     </p>
-                </div>
+                    <p className="mt-2 text-sm text-[#8b8b93]">
+                        Don&apos;t have an account?
+                    </p>
+                    <p className="text-base text-[#8b8b93]">
+                        You can{" "}
+                        <Link className="font-semibold text-[#6b4dd7]" href="/signup">
+                            Register here!
+                        </Link>
+                    </p>
 
-                {/* FORM */}
-                <div className="p-8">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* EMAIL */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1 block">
-                                Email
-                            </label>
-                            <div className="relative">
-                                <Mail
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                    size={18}
-                                />
+                    <div className="mt-10 flex flex-col items-center gap-8 sm:flex-row sm:justify-center lg:justify-start">
+                        <div aria-hidden="true">
+                            <img src="/Demoo.png" alt="" />
+                        </div>
+                    </div>
+                </section>
+
+                <section className="flex justify-center lg:justify-end">
+                    <div className="w-full max-w-105 rounded-4xl bg-white p-6 shadow-[0_18px_40px_rgba(68,54,128,0.15)] sm:p-8">
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                            <label className="flex items-center gap-3 rounded-[18px] border border-transparent bg-[#f2f3f7] px-4 py-4 focus-within:border-[#6b4dd7]/40 cursor-pointer">
                                 <input
                                     name="email"
-                                    type="email"
+                                    type="text"
                                     required
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
+                                    placeholder="Enter email or Phone number"
+                                    className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
                                 />
-                            </div>
-                        </div>
-
-                        {/* PASSWORD */}
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-1 block">
-                                Password
                             </label>
-                            <div className="relative">
-                                <Lock
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                    size={18}
-                                />
+                            <div className="flex items-center gap-3 rounded-[18px] border border-transparent bg-[#f2f3f7] px-4 py-4 focus-within:border-[#6b4dd7]/40 transition-colors">
                                 <input
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
+                                    placeholder="Password"
+                                    className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="text-[#a1a1aa] hover:text-[#6b4dd7] transition-colors focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
                             </div>
-                        </div>
-
-                        {/* SUBMIT */}
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full ${targetRole === "seller"
-                                ? "bg-primary"
-                                : targetRole === "rider"
-                                    ? "bg-green-600"
-                                    : "bg-[#1877F2]"
-                                } text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2`}
-                        >
-                            {isLoading ? (
-                                <Loader2 className="animate-spin" />
-                            ) : (
-                                <>
-                                    Sign In <ArrowRight size={18} />
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    {/* DEV ROLE SWITCH */}
-                    {process.env.NODE_ENV === "development" && (
-                        <div className="mt-8 border-t pt-6">
-                            <p className="text-[10px] text-gray-400 font-bold text-center mb-4">
-                                DEVELOPMENT ROLE SWITCH
-                            </p>
-                            <div className="flex gap-2">
-                                {[
-                                    { id: "admin", icon: Shield },
-                                    { id: "seller", icon: ShoppingBag },
-                                    { id: "rider", icon: Shield },
-                                    { id: "client", icon: User },
-                                ].map((r) => (
-                                    <button
-                                        key={r.id}
-                                        onClick={() => setTargetRole(r.id)}
-                                        className={`flex-1 p-2 rounded-lg border ${targetRole === r.id
-                                            ? "bg-blue-50 border-blue-400 text-blue-600"
-                                            : "bg-gray-50 text-gray-400"
-                                            }`}
-                                    >
-                                        <r.icon size={16} />
-                                        <div className="text-[10px] font-bold">{r.id}</div>
-                                    </button>
-                                ))}
+                            <div className="mt-2 text-right text-sm text-[#8b8b93]">
+                                Forgot password?
                             </div>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="inline-flex w-full items-center justify-center rounded-2xl bg-[#6b4dd7] px-4 py-3 text-base font-semibold text-white shadow-[0_10px_24px_rgba(107,77,215,0.25)] transition hover:-translate-y-0.5 hover:bg-[#5338b4] disabled:cursor-not-allowed disabled:opacity-70 sm:py-4 sm:text-lg"
+                            >
+                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Sign In"}
+                            </button>
+                        </form>
 
-                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 mt-6">
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Test Credentials</p>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center text-[10px]">
-                                        <span className="font-bold text-gray-600">Admin:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-red-600">admin@shopod.com</code>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[10px]">
-                                        <span className="font-bold text-gray-600">Rider:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-green-600">rider@shopod.com</code>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[10px]">
-                                        <span className="font-bold text-gray-600">Seller:</span>
-                                        <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200 text-orange-600">seller@shopod.com</code>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                        {/* <div className="my-6 flex items-center gap-3 text-sm text-[#8b8b93]">
+                            <span className="h-px flex-1 bg-[#e5e6ec]" />
+                            Or continue with
+                            <span className="h-px flex-1 bg-[#e5e6ec]" />
+                        </div> */}
+                        {/* <div className="grid grid-cols-2 gap-4">
+                            <button
+                                className="flex h-14 items-center justify-center rounded-[18px] border border-[#e5e6ec] bg-white shadow-[0_8px_20px_rgba(28,24,60,0.08)] cursor-pointer"
+                                aria-label="Continue with Google"
+                                type="button"
+                            >
+                                <svg viewBox="0 0 24 24" className="h-6 w-6">
+                                    <path
+                                        d="M21.8 12.2c0-.7-.1-1.3-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.3c2-1.8 3-4.5 3-7.5z"
+                                        fill="#4285F4"
+                                    />
+                                    <path
+                                        d="M12 22c2.7 0 4.9-.9 6.6-2.4l-3.3-2.6c-.9.6-2.1 1-3.3 1-2.5 0-4.6-1.7-5.3-4H3.2v2.7A10 10 0 0 0 12 22z"
+                                        fill="#34A853"
+                                    />
+                                    <path
+                                        d="M6.7 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.3H3.2A10 10 0 0 0 2 12c0 1.7.4 3.3 1.2 4.7L6.7 14z"
+                                        fill="#FBBC05"
+                                    />
+                                    <path
+                                        d="M12 5.8c1.5 0 2.9.5 3.9 1.6l2.9-2.9A9.7 9.7 0 0 0 12 2 10 10 0 0 0 3.2 7.3l3.5 2.7c.7-2.3 2.8-4.2 5.3-4.2z"
+                                        fill="#EA4335"
+                                    />
+                                </svg>
+                            </button>
 
-                    <div className="mt-8 text-center text-xs text-gray-400">
-                        © 2026 Shopod Inc.
+                            <button
+                                className="flex h-14 items-center justify-center rounded-[18px] border border-[#e5e6ec] bg-white shadow-[0_8px_20px_rgba(28,24,60,0.08)] cursor-pointer"
+                                aria-label="Continue with Facebook"
+                                type="button"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+                                    <circle cx="12" cy="12" r="10" fill="#1877F2" />
+                                    <path
+                                        d="M13.1 7.6h2V5.1c-.3 0-1.4-.1-2.6-.1-2.6 0-4.3 1.6-4.3 4.5v2.1H5.9v2.8h2.3v4.5h3.2v-4.5h2.4l.4-2.8h-2.8V9.9c0-1 .3-1.7 1.7-1.7z"
+                                        fill="#ffffff"
+                                    />
+                                </svg>
+                            </button>
+                        </div> */}
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     );

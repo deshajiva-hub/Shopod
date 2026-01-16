@@ -32,7 +32,7 @@ const menuGroups = [
         title: "Management",
         items: [
             { name: "Users", icon: Users, href: "/admin/customers" },
-            { name: "Vendors", icon: Store, href: "/admin/restaurants" },
+            { name: "Vendors", icon: Store, href: "/admin/vendors" },
             { name: "Delivery Partners", icon: Bike, href: "/admin/riders" },
         ]
     },

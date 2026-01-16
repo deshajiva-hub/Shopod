@@ -14,9 +14,9 @@ export default function RestaurantsPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-800">Restaurants</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Vendors</h1>
                 <button className="flex items-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-medium">
-                    <Plus size={18} /> Add Restaurant
+                    <Plus size={18} /> Add Vendor
                 </button>
             </div>
 
@@ -27,7 +27,7 @@ export default function RestaurantsPage() {
                         <Store size={24} />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500">Total Restaurants</p>
+                        <p className="text-sm text-gray-500">Total Vendors</p>
                         <p className="text-2xl font-bold">48</p>
                     </div>
                 </div>
@@ -56,7 +56,7 @@ export default function RestaurantsPage() {
                 <table className="w-full text-sm text-left">
                     <thead className="bg-[#F9FAFB] text-gray-600 font-medium border-b border-gray-200">
                         <tr>
-                            <th className="px-6 py-3">Restaurant</th>
+                            <th className="px-6 py-3">Vendor</th>
                             <th className="px-6 py-3">Type</th>
                             <th className="px-6 py-3">Location</th>
                             <th className="px-6 py-3">Rating</th>
