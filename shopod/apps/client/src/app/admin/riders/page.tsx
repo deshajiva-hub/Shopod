@@ -1,141 +1,180 @@
 "use client";
-import React from "react";
-import {
-    Bike,
-    Search,
-    Filter,
-    MoreHorizontal,
-    Star,
-    CheckCircle2,
-    XCircle,
-    Power
-} from "lucide-react";
+import React, { useState } from "react";
+import RiderTable, { Rider } from "@/components/admin/riders/RiderTable";
+import RiderFilters from "@/components/admin/riders/RiderFilters";
+import AssignOrderModal from "@/components/admin/riders/AssignOrderModal";
+import RiderHistoryModal from "@/components/admin/riders/RiderHistoryModal";
+import { Bike, Users, Clock, Star, Plus, Download } from "lucide-react";
 
-const mockRiders = [
-    { id: 1, name: "Rahul Sharma", phone: "9876543210", status: "Online", zone: "Bandra West", rating: 4.8, orders: 12, earnings: 1450 },
-    { id: 2, name: "Amit Kumar", phone: "9823456789", status: "In Order", zone: "Andheri East", rating: 4.5, orders: 8, earnings: 920 },
-    { id: 3, name: "Suresh P.", phone: "9988776655", status: "Offline", zone: "Mumbai Central", rating: 4.2, orders: 4, earnings: 450 },
-    { id: 4, name: "Vikram Singh", phone: "9123456780", status: "Online", zone: "Worli", rating: 4.9, orders: 15, earnings: 1800 },
+const MOCK_RIDERS: Rider[] = [
+    {
+        id: "RID-201",
+        name: "Rahul Sharma",
+        phone: "+91 98765 43210",
+        city: "Mumbai",
+        availability: "Available",
+        status: "Online",
+        completedOrders: 1540,
+        rating: 4.8,
+        joinedDate: "Mar 12, 2025"
+    },
+    {
+        id: "RID-202",
+        name: "Amit Kumar",
+        phone: "+91 98234 56789",
+        city: "Delhi",
+        availability: "Busy",
+        status: "In Order",
+        completedOrders: 980,
+        rating: 4.5,
+        joinedDate: "Apr 05, 2025"
+    },
+    {
+        id: "RID-203",
+        name: "Suresh Pillai",
+        phone: "+91 99887 76655",
+        city: "Bangalore",
+        availability: "Available",
+        status: "Offline",
+        completedOrders: 2100,
+        rating: 4.9,
+        joinedDate: "Jan 20, 2025"
+    },
+    {
+        id: "RID-204",
+        name: "Vikram Singh",
+        phone: "+91 91234 56780",
+        city: "Mumbai",
+        availability: "Available",
+        status: "Online",
+        completedOrders: 420,
+        rating: 4.2,
+        joinedDate: "Dec 15, 2025"
+    },
 ];
 
 export default function RidersPage() {
+    const [riders, setRiders] = useState<Rider[]>(MOCK_RIDERS);
+    const [selectedRider, setSelectedRider] = useState<Rider | null>(null);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+    const handleSearch = (query: string) => {
+        if (!query) {
+            setRiders(MOCK_RIDERS);
+            return;
+        }
+        const filtered = MOCK_RIDERS.filter(r =>
+            r.name.toLowerCase().includes(query.toLowerCase()) ||
+            r.phone.includes(query)
+        );
+        setRiders(filtered);
+    };
+
+    const handleFilterChange = (filters: any) => {
+        let filtered = [...MOCK_RIDERS];
+        if (filters.city) filtered = filtered.filter(r => r.city === filters.city);
+        if (filters.status) filtered = filtered.filter(r => r.status === filters.status);
+        setRiders(filtered);
+    };
+
+    const handleAssignOrder = (rider: Rider) => {
+        setSelectedRider(rider);
+        setIsAssignModalOpen(true);
+    };
+
+    const handleViewHistory = (rider: Rider) => {
+        setSelectedRider(rider);
+        setIsHistoryModalOpen(true);
+    };
+
+    const handleProcessAssignment = (orderId: string, riderId: string) => {
+        alert(`Order ${orderId} has been manually assigned to Partner ${riderId}. Rider notification sent.`);
+        setIsAssignModalOpen(false);
+        // In real app, update state/API
+    };
+
     return (
-        <div className="space-y-8 pb-10">
-            <div className="flex justify-between items-center">
+        <div className="space-y-8 max-w-[1600px] mx-auto pb-10">
+            {/* Header Area */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Delivery Partners</h1>
-                    <p className="text-gray-500 font-bold mt-1 text-sm">Manage, verify, and track your delivery fleet.</p>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Delivery Fleet Management</h1>
+                    <p className="text-gray-500 font-bold mt-1 text-sm uppercase tracking-widest">Track, Verify and Optimize Rider Performance.</p>
                 </div>
-                <button className="flex items-center gap-2 bg-[#1877F2] hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-black text-xs shadow-lg shadow-blue-200 transition-all uppercase tracking-widest">
-                    <Bike size={18} /> Add New Partner
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <RiderStatCard title="Active Riders" value="452" color="green" />
-                <RiderStatCard title="Total Fleet" value="1,245" color="blue" />
-                <RiderStatCard title="Average Rating" value="4.7" color="orange" />
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden font-bold">
-                <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 items-center justify-between">
-                    <div className="relative w-full md:w-96">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by name, phone or zone..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-100 transition-all"
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-100 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all">
-                            <Filter size={16} /> Filters
-                        </button>
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-black hover:bg-black transition-all">
-                            Export List
-                        </button>
-                    </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50/50">
-                            <tr>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase text-gray-400 tracking-widest">Partner Details</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase text-gray-400 tracking-widest">Status</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase text-gray-400 tracking-widest">Zone</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Efficiency</th>
-                                <th className="px-8 py-5 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {mockRiders.map((rider) => (
-                                <tr key={rider.id} className="hover:bg-gray-50/50 transition-all group">
-                                    <td className="px-8 py-5">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-[#1877F2] font-black text-xl border-2 border-white shadow-sm ring-1 ring-gray-100">
-                                                {rider.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-black text-gray-900">{rider.name}</p>
-                                                <p className="text-[10px] font-bold text-gray-400 uppercase">{rider.phone}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-5">
-                                        <StatusBadge status={rider.status} />
-                                    </td>
-                                    <td className="px-8 py-5 text-sm font-black text-gray-900">{rider.zone}</td>
-                                    <td className="px-8 py-5">
-                                        <div className="flex flex-col items-center">
-                                            <div className="flex items-center gap-1 text-sm font-black text-gray-900">
-                                                {rider.rating} <Star size={14} className="text-orange-500 fill-orange-500" />
-                                            </div>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase mt-1">{rider.orders} Orders Today</p>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-5 text-right">
-                                        <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                                            <MoreHorizontal size={20} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="flex gap-3 w-full sm:w-auto">
+                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all uppercase tracking-widest">
+                        <Download size={18} className="text-gray-400" /> Export List
+                    </button>
+                    <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-[#1877F2] rounded-xl text-xs font-black text-white hover:bg-[#166fe5] transition-all shadow-lg shadow-blue-100 uppercase tracking-widest">
+                        <Plus size={18} /> Onboard Partner
+                    </button>
                 </div>
             </div>
+
+            {/* Metrics Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <MetricCard title="Active Partners" value="1,245" subValue="+12 Today" icon={<Bike size={24} />} color="blue" />
+                <MetricCard title="In Delivery" value="452" subValue="85% Efficiency" icon={<Users size={24} />} color="green" />
+                <MetricCard title="Avg. Rating" value="4.82" subValue="High Satisfaction" icon={<Star size={24} />} color="orange" />
+                <MetricCard title="On Time Rate" value="98.2%" subValue="-0.5% Since Prev." icon={<Clock size={24} />} color="purple" />
+            </div>
+
+            {/* Filtering & Search */}
+            <RiderFilters onSearch={handleSearch} onFilterChange={handleFilterChange} />
+
+            {/* Main Fleet Table */}
+            <div className="relative">
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-[#1877F2]/10 text-[#1877F2] rounded-full text-[10px] font-black uppercase tracking-wider mb-4 w-fit">
+                    <span className="w-1.5 h-1.5 bg-[#1877F2] rounded-full animate-pulse"></span>
+                    {riders.length} Partners Syncing Live
+                </div>
+                <RiderTable
+                    riders={riders}
+                    onAssignOrder={handleAssignOrder}
+                    onViewHistory={handleViewHistory}
+                />
+            </div>
+
+            {/* Account Management Modals */}
+            <AssignOrderModal
+                isOpen={isAssignModalOpen}
+                onClose={() => setIsAssignModalOpen(false)}
+                rider={selectedRider}
+                onAssign={handleProcessAssignment}
+            />
+
+            <RiderHistoryModal
+                isOpen={isHistoryModalOpen}
+                onClose={() => setIsHistoryModalOpen(false)}
+                rider={selectedRider}
+            />
         </div>
     );
 }
 
-function RiderStatCard({ title, value, color }: any) {
-    const accents: any = {
-        green: "bg-green-500",
-        blue: "bg-[#1877F2]",
-        orange: "bg-orange-500"
+function MetricCard({ title, value, subValue, icon, color }: any) {
+    const accentColors: any = {
+        blue: "bg-[#1877F2] text-white shadow-blue-100",
+        green: "bg-green-600 text-white shadow-green-100",
+        orange: "bg-orange-600 text-white shadow-orange-100",
+        purple: "bg-purple-600 text-white shadow-purple-100"
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group">
-            <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full opacity-5 transition-transform group-hover:scale-125 ${accents[color]}`}></div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{title}</p>
-            <h3 className="text-3xl font-black text-gray-900">{value}</h3>
-            <div className={`mt-4 w-12 h-1.5 rounded-full ${accents[color]}`}></div>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-[#1877F2]/30 transition-all">
+            <div className="flex justify-between items-start mb-4">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
+                    <h3 className="text-3xl font-black text-gray-900">{value}</h3>
+                </div>
+                <div className={`p-3 rounded-xl ${accentColors[color]} shadow-lg transition-transform group-hover:scale-110`}>
+                    {icon}
+                </div>
+            </div>
+            <p className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                {subValue}
+            </p>
         </div>
-    );
-}
-
-function StatusBadge({ status }: { status: string }) {
-    const styles: any = {
-        "Online": "bg-green-50 text-green-600 border-green-100",
-        "In Order": "bg-blue-50 text-blue-600 border-blue-100",
-        "Offline": "bg-gray-100 text-gray-500 border-gray-200"
-    };
-
-    return (
-        <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${styles[status]}`}>
-            {status}
-        </span>
     );
 }

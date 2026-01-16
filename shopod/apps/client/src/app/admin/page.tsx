@@ -1,4 +1,5 @@
 "use client";
+import React, { useState, useEffect } from "react";
 import {
   DollarSign,
   ShoppingBag,
@@ -6,25 +7,26 @@ import {
   TrendingUp,
   Store,
   Bike,
-  MapPin,
   Zap,
   ShoppingCart,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  TrendingDown,
+  AlertCircle,
+  Calendar,
+  Layers
 } from "lucide-react";
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   AreaChart,
-  Area,
-  LineChart,
-  Line
+  Area
 } from "recharts";
+import KPICard from "@/components/admin/dashboard/KPICard";
+import KPISkeleton from "@/components/admin/dashboard/KPISkeleton";
 
 const performanceData = [
   { name: "Mon", orders: 450, revenue: 2400 },
@@ -37,73 +39,175 @@ const performanceData = [
 ];
 
 export default function DashboardPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [period, setPeriod] = useState("Month");
+
+  useEffect(() => {
+    // Simulate initial loading
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handlePeriodChange = (val: string) => {
+    setIsLoading(true);
+    setPeriod(val);
+    setTimeout(() => setIsLoading(false), 800);
+  };
+
   return (
-    <div className="space-y-8 pb-10">
-      <div className="flex justify-between items-end">
+    <div className="space-y-10 pb-10 max-w-[1600px] mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Super Admin Dashboard</h1>
-          <p className="text-gray-500 font-bold mt-1">Platform-wide performance and operational health.</p>
-        </div>
-        <div className="flex gap-3">
-          <div className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border border-green-200 uppercase tracking-widest">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            System Live
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></span>
+            <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em]">Platform Live & Operational</p>
           </div>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Executive Summary</h1>
+          <p className="text-gray-500 font-bold mt-1 text-sm uppercase tracking-widest opacity-70">Real-time health & growth metrics for Shopod.</p>
+        </div>
+
+        <div className="flex items-center gap-2 p-1.5 bg-gray-100 rounded-2xl border border-gray-200 shadow-inner">
+          {["Day", "Week", "Month"].map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePeriodChange(p)}
+              className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${period === p
+                  ? "bg-white text-[#1877F2] shadow-sm"
+                  : "text-gray-400 hover:text-gray-600"
+                }`}
+            >
+              {p}
+            </button>
+          ))}
+          <div className="w-px h-4 bg-gray-200 mx-2"></div>
+          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+            <Calendar size={18} />
+          </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Revenue"
-          value="₹12,45,231"
-          icon={<DollarSign size={20} />}
-          color="blue"
-          trend="+12.5%"
-          isUp={true}
-        />
-        <StatCard
-          title="Total Vendors"
-          value="1,248"
-          icon={<Store size={20} />}
-          color="orange"
-          trend="+4.2%"
-          isUp={true}
-        />
-        <StatCard
-          title="Active Riders"
-          value="452"
-          icon={<Bike size={20} />}
-          color="green"
-          trend="-2.1%"
-          isUp={false}
-        />
-        <StatCard
-          title="Live Orders"
-          value="84"
-          icon={<Zap size={20} />}
-          color="purple"
-          trend="+18%"
-          isUp={true}
-        />
+      {/* KPI Grid */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 px-1">
+          <TrendingUp size={16} className="text-[#1877F2]" />
+          <h2 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Core Performance Indicators</h2>
+        </div>
+
+        {isLoading ? (
+          <KPISkeleton />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <KPICard
+              title="Total Revenue"
+              value="₹12.45L"
+              icon={<DollarSign size={20} />}
+              trend="+12.5%"
+              isUp={true}
+              period={period}
+              tooltip="Total platform sales volume after discounts and cancellations."
+              href="/admin/transactions"
+              color="blue"
+            />
+            <KPICard
+              title="Total Orders"
+              value="12,840"
+              icon={<ShoppingBag size={20} />}
+              trend="+8.2%"
+              isUp={true}
+              period={period}
+              tooltip="Aggregate number of orders placed across all categories."
+              href="/admin/orders"
+              color="orange"
+            />
+            <KPICard
+              title="Live Orders"
+              value="84"
+              icon={<Zap size={20} />}
+              trend="+18%"
+              isUp={true}
+              period="Last Hour"
+              tooltip="Orders currently in preparation or out for delivery."
+              href="/admin/orders?status=active"
+              color="purple"
+            />
+            <KPICard
+              title="Total Customers"
+              value="45.2K"
+              icon={<Users size={20} />}
+              trend="+5.1%"
+              isUp={true}
+              period={period}
+              tooltip="Unique registered customers who have placed at least one order."
+              href="/admin/customers"
+              color="indigo"
+            />
+            <KPICard
+              title="Total Vendors"
+              value="1,248"
+              icon={<Store size={20} />}
+              trend="+4.2%"
+              isUp={true}
+              period={period}
+              tooltip="Active restaurants and grocery partners on the platform."
+              href="/admin/vendors"
+              color="pink"
+            />
+            <KPICard
+              title="Active Riders"
+              value="452"
+              icon={<Bike size={20} />}
+              trend="-2.1%"
+              isUp={false}
+              period="Last Hour"
+              tooltip="Riders currently online and available for delivery."
+              href="/admin/riders"
+              color="green"
+            />
+            <KPICard
+              title="Cancelled Orders"
+              value="124"
+              icon={<TrendingDown size={20} />}
+              trend="-15.4%"
+              isUp={true} // Decline in cancellation is positive
+              period={period}
+              tooltip="Orders cancelled by users or vendors. A decrease is positive."
+              href="/admin/orders?status=cancelled"
+              color="yellow"
+            />
+            <KPICard
+              title="Failed Payments"
+              value="45"
+              icon={<AlertCircle size={20} />}
+              trend="+5.2%"
+              isUp={false} // Increase in failed payments is negative
+              period={period}
+              tooltip="Transactions that were aborted or declined by gateways."
+              href="/admin/transactions?status=failed"
+              color="red"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Analytics Section */}
+      {/* Analytics & Activity Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-black text-gray-900 tracking-tight text-center">Revenue Growth</h2>
-            <select className="bg-gray-50 border-gray-100 text-xs font-bold px-3 py-1.5 rounded-lg focus:ring-0 focus:border-gray-200">
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
-            </select>
+        <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h2 className="text-xl font-black text-gray-900 tracking-tight">Revenue Dynamics</h2>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Growth projection for the {period}.</p>
+            </div>
+            <button className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+              <Layers size={18} className="text-gray-400" />
+            </button>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[350px] w-full mt-auto">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={performanceData}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1877F2" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="#1877F2" stopOpacity={0.15} />
                     <stop offset="95%" stopColor="#1877F2" stopOpacity={0} />
                   </linearGradient>
                 </defs>
@@ -111,17 +215,24 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                 <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
                 <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#1877F2" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="revenue" stroke="#1877F2" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 font-bold">
-          <h2 className="text-xl font-black text-gray-900 tracking-tight mb-8">Recent Activity</h2>
-          <div className="space-y-6">
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h2 className="text-xl font-black text-gray-900 tracking-tight">Operational Logs</h2>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">System-wide event stream.</p>
+            </div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+          </div>
+
+          <div className="space-y-7 flex-1">
             <ActivityItem
               type="order"
               title="New Order Received"
@@ -147,37 +258,11 @@ export default function DashboardPage() {
               time="2 hours ago"
             />
           </div>
-          <button className="w-full mt-8 py-3 border-2 border-gray-50 rounded-xl text-xs font-black text-blue-600 hover:bg-blue-50 transition-all uppercase tracking-widest">
-            View All Logs
+
+          <button className="w-full mt-8 py-4 bg-gray-50 text-gray-900 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-all border border-gray-100">
+            Audit Enterprise Logs
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ title, value, icon, color, trend, isUp }: any) {
-  const colors: any = {
-    blue: "bg-blue-600 shadow-blue-200",
-    orange: "bg-orange-500 shadow-orange-200",
-    green: "bg-green-500 shadow-green-200",
-    purple: "bg-purple-600 shadow-purple-200"
-  };
-
-  return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-xl shadow-lg text-white ${colors[color]}`}>
-          {icon}
-        </div>
-        <div className={`flex items-center gap-1 text-[10px] font-black uppercase px-2 py-1 rounded-lg ${isUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-          {isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-          {trend}
-        </div>
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
-        <h3 className="text-2xl font-black text-gray-900 mt-1">{value}</h3>
       </div>
     </div>
   );
@@ -191,15 +276,22 @@ function ActivityItem({ title, desc, time, type }: any) {
     alert: <Zap size={16} className="text-purple-600" />
   };
 
+  const bgs: any = {
+    order: "bg-blue-50",
+    vendor: "bg-orange-50",
+    rider: "bg-green-50",
+    alert: "bg-purple-50"
+  };
+
   return (
-    <div className="flex gap-4">
-      <div className="mt-1">
+    <div className="flex gap-4 group cursor-pointer">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all group-hover:scale-110 ${bgs[type]}`}>
         {icons[type]}
       </div>
       <div>
-        <p className="text-sm font-black text-gray-900 leading-none">{title}</p>
-        <p className="text-xs text-gray-500 mt-1">{desc}</p>
-        <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">{time}</p>
+        <p className="text-[13px] font-black text-gray-900 leading-none group-hover:text-[#1877F2] transition-colors">{title}</p>
+        <p className="text-[11px] font-medium text-gray-500 mt-1.5 line-clamp-1">{desc}</p>
+        <p className="text-[9px] text-gray-400 font-black uppercase tracking-tighter mt-1">{time}</p>
       </div>
     </div>
   );

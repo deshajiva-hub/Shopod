@@ -1,107 +1,281 @@
 "use client";
-import React from "react";
-import {
-    Layers,
-    Plus,
-    Edit2,
-    Trash2,
-    ChevronRight,
-    Search,
-    Image as ImageIcon
-} from "lucide-react";
+import React, { useState } from "react";
+import { Plus, Download, LayoutGrid, List, Search, Layers, RefreshCw } from "lucide-react";
+import CategoryItem, { Category } from "@/components/admin/categories/CategoryItem";
+import CategoryFormModal from "@/components/admin/categories/CategoryFormModal";
 
-const mockCategories = [
-    { id: 1, name: "Food & Restaurants", sub: "12 Sub-categories", items: "1,245 Items", icon: "🍔", status: "Active" },
-    { id: 2, name: "Groceries", sub: "45 Sub-categories", items: "8,920 Items", icon: "🥦", status: "Active" },
-    { id: 3, name: "Pharmacy", sub: "8 Sub-categories", items: "540 Items", icon: "💊", status: "Active" },
-    { id: 4, name: "Electronics", sub: "15 Sub-categories", items: "2,100 Items", icon: "🎧", status: "Maintenance" },
+const INITIAL_CATEGORIES: Category[] = [
+    {
+        id: "CAT-1",
+        name: "Food & Restaurants",
+        icon: "🍔",
+        status: "Active",
+        sortOrder: 1,
+        subcategories: [
+            { id: "SC-11", name: "North Indian", icon: "🍛", status: "Active", sortOrder: 1, parentId: "CAT-1" },
+            { id: "SC-12", name: "Chinese", icon: "🥢", status: "Active", sortOrder: 2, parentId: "CAT-1" },
+            { id: "SC-13", name: "Fast Food", icon: "🍟", status: "Active", sortOrder: 3, parentId: "CAT-1" },
+        ]
+    },
+    {
+        id: "CAT-2",
+        name: "Groceries",
+        icon: "🥦",
+        status: "Active",
+        sortOrder: 2,
+        subcategories: [
+            { id: "SC-21", name: "Fruits & Vegetables", icon: "🍎", status: "Active", sortOrder: 1, parentId: "CAT-2" },
+            { id: "SC-22", name: "Dairy & Eggs", icon: "🥚", status: "Active", sortOrder: 2, parentId: "CAT-2" },
+        ]
+    },
+    {
+        id: "CAT-3",
+        name: "Pharmacy",
+        icon: "💊",
+        status: "Active",
+        sortOrder: 3,
+        subcategories: []
+    }
 ];
 
 export default function CategoriesPage() {
-    return (
-        <div className="space-y-8 pb-10">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Global Categories</h1>
-                    <p className="text-gray-500 font-bold mt-1 text-sm">Organize the entire platform's product hierarchy.</p>
-                </div>
-                <button className="flex items-center gap-2 bg-[#1877F2] hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-black text-xs shadow-lg shadow-blue-200 transition-all uppercase tracking-widest">
-                    <Plus size={18} /> Create New Category
-                </button>
-            </div>
+    const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [activeParent, setActiveParent] = useState<{ id: string, name: string } | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {mockCategories.map((cat) => (
-                    <div key={cat.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex items-center justify-between group hover:border-[#1877F2] transition-all">
-                        <div className="flex items-center gap-6">
-                            <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center text-4xl group-hover:bg-blue-50 transition-colors">
-                                {cat.icon}
-                            </div>
-                            <div className="font-bold">
-                                <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest mb-2 inline-block ${cat.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                    {cat.status}
-                                </span>
-                                <h3 className="text-xl font-black text-gray-900 tracking-tight">{cat.name}</h3>
-                                <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-400 uppercase tracking-widest">
-                                    <span>{cat.sub}</span>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                    <span>{cat.items}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                            <button className="p-3 bg-gray-50 text-gray-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                <Edit2 size={18} />
-                            </button>
-                            <button className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all shadow-sm">
-                                <Trash2 size={18} />
-                            </button>
-                        </div>
-                    </div>
-                ))}
+    const handleSave = (data: Partial<Category>) => {
+        if (editingCategory) {
+            // Update existing
+            const updateNested = (list: Category[]): Category[] => {
+                return list.map(cat => {
+                    if (cat.id === editingCategory.id) {
+                        return { ...cat, ...data };
+                    }
+                    if (cat.subcategories) {
+                        return { ...cat, subcategories: updateNested(cat.subcategories) };
+                    }
+                    return cat;
+                });
+            };
+            setCategories(updateNested(categories));
+        } else {
+            // Create new
+            const newCat: Category = {
+                id: `CAT-${Math.floor(Math.random() * 10000)}`,
+                name: data.name || "New Category",
+                icon: data.icon || "📁",
+                status: data.status || "Active",
+                sortOrder: data.sortOrder || 0,
+                parentId: activeParent?.id || null,
+                subcategories: []
+            };
 
-                <button className="border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center p-8 text-gray-400 hover:border-blue-200 hover:text-blue-400 hover:bg-blue-50/20 transition-all group">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                            <Plus size={24} />
-                        </div>
-                        <p className="font-black text-sm uppercase tracking-widest">Create Category</p>
-                    </div>
-                </button>
-            </div>
+            if (activeParent) {
+                const addSub = (list: Category[]): Category[] => {
+                    return list.map(cat => {
+                        if (cat.id === activeParent.id) {
+                            return { ...cat, subcategories: [...(cat.subcategories || []), newCat] };
+                        }
+                        if (cat.subcategories) {
+                            return { ...cat, subcategories: addSub(cat.subcategories) };
+                        }
+                        return cat;
+                    });
+                };
+                setCategories(addSub(categories));
+            } else {
+                setCategories([...categories, newCat]);
+            }
+        }
+        setIsModalOpen(false);
+    };
 
-            <div className="card p-0 overflow-hidden mt-8">
-                <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                    <h2 className="text-lg font-black text-gray-900 uppercase tracking-widest">Recent Sub-categories</h2>
-                    <button className="text-[10px] font-black text-[#1877F2] uppercase tracking-widest hover:underline">View All Hierarchies</button>
-                </div>
-                <div className="divide-y divide-gray-50">
-                    <SubCatItem parent="Food" name="North Indian" count="450 items" />
-                    <SubCatItem parent="Food" name="Chinese" count="320 items" />
-                    <SubCatItem parent="Groceries" name="Fruits & Vegetables" count="890 items" />
-                    <SubCatItem parent="Groceries" name="Dairy & Eggs" count="210 items" />
-                </div>
-            </div>
-        </div>
+    const handleDelete = (id: string) => {
+        if (confirm("Are you sure you want to delete this category? This might affect products linked to it.")) {
+            const deleteNested = (list: Category[]): Category[] => {
+                return list
+                    .filter(cat => cat.id !== id)
+                    .map(cat => ({
+                        ...cat,
+                        subcategories: cat.subcategories ? deleteNested(cat.subcategories) : []
+                    }));
+            };
+            setCategories(deleteNested(categories));
+        }
+    };
+
+    const handleStatusToggle = (id: string, status: "Active" | "Inactive") => {
+        const toggleNested = (list: Category[]): Category[] => {
+            return list.map(cat => {
+                if (cat.id === id) {
+                    return { ...cat, status };
+                }
+                if (cat.subcategories) {
+                    return { ...cat, subcategories: toggleNested(cat.subcategories) };
+                }
+                return cat;
+            });
+        };
+        setCategories(toggleNested(categories));
+    };
+
+    const handleAddSub = (parentId: string) => {
+        const findParent = (list: Category[]): Category | undefined => {
+            for (const cat of list) {
+                if (cat.id === parentId) return cat;
+                if (cat.subcategories) {
+                    const found = findParent(cat.subcategories);
+                    if (found) return found;
+                }
+            }
+            return undefined;
+        };
+        const p = findParent(categories);
+        if (p) {
+            setActiveParent({ id: p.id, name: p.name });
+            setEditingCategory(null);
+            setIsModalOpen(true);
+        }
+    };
+
+    const handleEdit = (cat: Category) => {
+        setEditingCategory(cat);
+        setActiveParent(null);
+        setIsModalOpen(true);
+    };
+
+    const filteredCategories = categories.filter(c =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.subcategories?.some(sc => sc.name.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-}
 
-function SubCatItem({ parent, name, count }: any) {
     return (
-        <div className="px-8 py-5 flex items-center justify-between group hover:bg-gray-50/30 transition-all">
-            <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-white border border-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                    <Layers size={18} />
-                </div>
+        <div className="space-y-8 max-w-[1400px] mx-auto pb-10">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-0.5">{parent}</p>
-                    <p className="text-sm font-black text-gray-900">{name}</p>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Categories & Hierarchy</h1>
+                    <p className="text-gray-500 font-bold mt-1 text-sm uppercase tracking-widest">Manage Global Taxonomy & Nested Subcategories.</p>
+                </div>
+                <div className="flex gap-3">
+                    <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-xl text-xs font-black text-gray-600 hover:bg-gray-50 transition-all uppercase tracking-widest">
+                        <Download size={18} className="text-gray-400" /> Export JSON
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingCategory(null);
+                            setActiveParent(null);
+                            setIsModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#1877F2] rounded-xl text-xs font-black text-white hover:bg-[#166fe5] transition-all shadow-lg shadow-blue-100 uppercase tracking-widest"
+                    >
+                        <Plus size={18} /> New Category
+                    </button>
                 </div>
             </div>
-            <div className="flex items-center gap-6">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{count}</span>
-                <ChevronRight size={18} className="text-gray-200 group-hover:text-gray-400 transition-colors" />
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-[#1877F2]/30 transition-all">
+                    <div className="p-3 bg-blue-50 text-[#1877F2] rounded-xl group-hover:bg-[#1877F2] group-hover:text-white transition-all">
+                        <Layers size={24} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Parent Categories</p>
+                        <p className="text-2xl font-black text-gray-900">{categories.length}</p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-purple-500/30 transition-all">
+                    <div className="p-3 bg-purple-50 text-purple-500 rounded-xl group-hover:bg-purple-500 group-hover:text-white transition-all">
+                        <List size={24} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Active Nodes</p>
+                        <p className="text-2xl font-black text-gray-900">
+                            {categories.reduce((acc, cat) => acc + 1 + (cat.subcategories?.length || 0), 0)}
+                        </p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-green-500/30 transition-all">
+                    <div className="p-3 bg-green-50 text-green-500 rounded-xl group-hover:bg-green-500 group-hover:text-white transition-all">
+                        <RefreshCw size={24} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Last Synced</p>
+                        <p className="text-2xl font-black text-gray-900">Just Now</p>
+                    </div>
+                </div>
             </div>
+
+            {/* Content Area */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                {/* Search Bar */}
+                <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50/30">
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search categories or subcategories..."
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1877F2]/20 focus:border-[#1877F2] transition-all font-bold text-sm shadow-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <button className="px-4 py-2 bg-gray-50 text-[#1877F2] rounded-lg font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                            <List size={14} /> Tree View
+                        </button>
+                        <button className="px-4 py-2 hover:bg-gray-50 text-gray-400 rounded-lg font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all">
+                            <LayoutGrid size={14} /> Grid Map
+                        </button>
+                    </div>
+                </div>
+
+                {/* Categories Tree */}
+                <div className="divide-y divide-gray-50">
+                    {filteredCategories.length > 0 ? (
+                        filteredCategories.sort((a, b) => a.sortOrder - b.sortOrder).map((cat) => (
+                            <CategoryItem
+                                key={cat.id}
+                                category={cat}
+                                level={0}
+                                onEdit={handleEdit}
+                                onAddSub={handleAddSub}
+                                onDelete={handleDelete}
+                                onStatusToggle={handleStatusToggle}
+                            />
+                        ))
+                    ) : (
+                        <div className="p-20 text-center space-y-4">
+                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
+                                <Layers size={40} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-gray-900">No results found</h3>
+                                <p className="text-sm text-gray-500 max-w-xs mx-auto">We couldn't find any category matching "{searchQuery}". Try a different search term.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-6 bg-gray-50/50 flex items-center justify-center">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        Drag and drop to reorder categories coming soon
+                    </p>
+                </div>
+            </div>
+
+            {/* Modal */}
+            <CategoryFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSave}
+                initialData={editingCategory}
+                parentId={activeParent?.id}
+                parentName={activeParent?.name}
+            />
         </div>
     );
 }
