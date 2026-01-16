@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
-import AuthGuard from "@/components/seller/Auth/AuthGuard";
 import Sidebar from "@/components/seller/Layout/Sidebar";
 import Header from "@/components/seller/Layout/Header";
+import RoleGuard from "@/components/common/Auth/RoleGuard";
 
 export default function DashboardLayout({
     children,
@@ -10,7 +10,7 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <AuthGuard>
+        <RoleGuard allowedRoles={["seller"]}>
             <div className="flex">
                 <Sidebar />
                 <div className="flex-1 ml-64 min-h-screen">
@@ -20,6 +20,6 @@ export default function DashboardLayout({
                     </main>
                 </div>
             </div>
-        </AuthGuard>
+        </RoleGuard>
     );
 }
