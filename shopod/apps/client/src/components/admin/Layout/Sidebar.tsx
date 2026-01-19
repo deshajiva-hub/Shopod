@@ -66,11 +66,16 @@ const menuGroups = [
     }
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
 
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col z-50">
+        <aside className={`w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-gray-100">
                 <span className="text-2xl font-bold text-[#1877F2]">Shopod<span className="text-gray-400 text-sm font-normal ml-1">Admin</span></span>

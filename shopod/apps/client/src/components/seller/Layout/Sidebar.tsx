@@ -26,11 +26,16 @@ const menuItems = [
     { name: "Settings", icon: Settings, href: "/seller/settings" },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
 
     return (
-        <aside className="w-64 bg-secondary h-screen fixed left-0 top-0 flex flex-col z-50 text-white">
+        <aside className={`w-64 bg-secondary h-screen fixed left-0 top-0 flex flex-col z-50 text-white transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
             {/* Logo */}
             <div className="h-20 flex items-center px-6 border-b border-gray-700">
                 <div className="bg-primary p-1.5 rounded-lg mr-3 shadow-lg">

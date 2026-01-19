@@ -4,8 +4,13 @@ import { Bell, Search, User, MapPin } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import NotificationDropdown from "../Notifications/NotificationDropdown";
+import { Menu } from "lucide-react";
 
-export default function RiderHeader() {
+interface RiderHeaderProps {
+    onToggleSidebar?: () => void;
+}
+
+export default function RiderHeader({ onToggleSidebar }: RiderHeaderProps) {
     const { user } = useSelector((state: RootState) => state.user);
     const userName = user?.email?.split('@')[0] || "Partner";
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -22,8 +27,14 @@ export default function RiderHeader() {
     }, []);
 
     return (
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 fixed top-0 right-0 left-64 z-40 flex items-center justify-between px-8">
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 fixed top-0 right-0 left-0 z-40 flex items-center justify-between px-4 md:px-8 transition-all duration-300 md:left-64">
             <div className="flex items-center gap-4 text-gray-400">
+                <button
+                    onClick={onToggleSidebar}
+                    className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden"
+                >
+                    <Menu size={24} />
+                </button>
                 <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
                     <MapPin size={16} className="text-green-600" />
                     <span className="text-xs font-bold text-gray-600">Chembur, Mumbai</span>

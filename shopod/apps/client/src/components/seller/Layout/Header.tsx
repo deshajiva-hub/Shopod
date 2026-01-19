@@ -1,19 +1,29 @@
 "use client";
 import React, { useState } from "react";
-import { Bell, Search, User, PowerOff, Power } from "lucide-react";
+import { Bell, Search, User, PowerOff, Power, Menu } from "lucide-react";
 
-export default function Header() {
+interface HeaderProps {
+    onToggleSidebar?: () => void;
+}
+
+export default function Header({ onToggleSidebar }: HeaderProps) {
     const [isOnline, setIsOnline] = useState(true);
 
     return (
-        <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between sticky top-0 z-40 shadow-sm">
-            <div className="flex items-center gap-6">
+        <header className="h-20 bg-white border-b border-gray-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-40 shadow-sm">
+            <div className="flex items-center gap-4 md:gap-6">
+                <button
+                    onClick={onToggleSidebar}
+                    className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden"
+                >
+                    <Menu size={24} />
+                </button>
                 {/* Store Status Toggle */}
                 <button
                     onClick={() => setIsOnline(!isOnline)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all border-2 ${isOnline
-                            ? "bg-success/5 border-success text-success"
-                            : "bg-error/5 border-error text-error shadow-inner"
+                        ? "bg-success/5 border-success text-success"
+                        : "bg-error/5 border-error text-error shadow-inner"
                         }`}
                 >
                     {isOnline ? <Power size={18} /> : <PowerOff size={18} />}

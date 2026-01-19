@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/features/userSlice";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { toast } from "sonner";
+import Success from "../success/success";
 
 export default function UnifiedLoginPage() {
     const router = useRouter();
@@ -18,8 +19,10 @@ export default function UnifiedLoginPage() {
         email: "",
         password: "",
     });
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [redirectPath, setRedirectPath] = useState("/");
 
-    const [targetRole, setTargetRole] = useState(searchParams.get("role") || "client");
+    const [targetRole, setTargetRole] = useState("client");
 
     useEffect(() => {
         const role = searchParams.get("role");
@@ -91,9 +94,12 @@ export default function UnifiedLoginPage() {
             toast.success("Login successful!");
 
             // Redirect based on role
-            if (role === "admin") router.push("/admin");
-            else if (role === "seller") router.push("/seller");
-            else router.push("/");
+            let targetPath = "/";
+            if (role === "admin") targetPath = "/admin";
+            else if (role === "seller") targetPath = "/seller";
+
+            setRedirectPath(targetPath);
+            setIsSuccess(true);
 
         } catch (err: any) {
             // Fallback mock for development if API is not ready
@@ -109,15 +115,22 @@ export default function UnifiedLoginPage() {
 
                 toast.success("Login successful!");
 
-                if (mockRole === "admin") router.push("/admin");
-                else if (mockRole === "seller") router.push("/seller");
-                else router.push("/");
+                let targetPath = "/";
+                if (mockRole === "admin") targetPath = "/admin";
+                else if (mockRole === "seller") targetPath = "/seller";
+
+                setRedirectPath(targetPath);
+                setIsSuccess(true);
                 return;
             }
 
             toast.error(err?.data?.message || "Login failed. Please try again.");
         }
     };
+
+    if (isSuccess) {
+        return <Success onComplete={() => router.push(redirectPath)} />;
+    }
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#ffffff_0%,#f4f1fb_45%,#f6f6fb_100%)] px-4 py-10 sm:px-6 sm:py-12 flex items-center">
@@ -162,6 +175,7 @@ export default function UnifiedLoginPage() {
                                     onChange={handleChange}
                                     placeholder="Enter email or Phone number"
                                     className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
+                                    suppressHydrationWarning
                                 />
                             </label>
                             <div className="flex items-center gap-3 rounded-[18px] border border-transparent bg-[#f2f3f7] px-4 py-4 focus-within:border-[#6b4dd7]/40 transition-colors">
@@ -173,6 +187,7 @@ export default function UnifiedLoginPage() {
                                     onChange={handleChange}
                                     placeholder="Password"
                                     className="w-full bg-transparent text-sm text-[#262626] outline-none sm:text-base"
+                                    suppressHydrationWarning
                                 />
                                 <button
                                     type="button"
@@ -193,52 +208,6 @@ export default function UnifiedLoginPage() {
                                 {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Sign In"}
                             </button>
                         </form>
-
-                        {/* <div className="my-6 flex items-center gap-3 text-sm text-[#8b8b93]">
-                            <span className="h-px flex-1 bg-[#e5e6ec]" />
-                            Or continue with
-                            <span className="h-px flex-1 bg-[#e5e6ec]" />
-                        </div> */}
-                        {/* <div className="grid grid-cols-2 gap-4">
-                            <button
-                                className="flex h-14 items-center justify-center rounded-[18px] border border-[#e5e6ec] bg-white shadow-[0_8px_20px_rgba(28,24,60,0.08)] cursor-pointer"
-                                aria-label="Continue with Google"
-                                type="button"
-                            >
-                                <svg viewBox="0 0 24 24" className="h-6 w-6">
-                                    <path
-                                        d="M21.8 12.2c0-.7-.1-1.3-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.3c2-1.8 3-4.5 3-7.5z"
-                                        fill="#4285F4"
-                                    />
-                                    <path
-                                        d="M12 22c2.7 0 4.9-.9 6.6-2.4l-3.3-2.6c-.9.6-2.1 1-3.3 1-2.5 0-4.6-1.7-5.3-4H3.2v2.7A10 10 0 0 0 12 22z"
-                                        fill="#34A853"
-                                    />
-                                    <path
-                                        d="M6.7 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.3H3.2A10 10 0 0 0 2 12c0 1.7.4 3.3 1.2 4.7L6.7 14z"
-                                        fill="#FBBC05"
-                                    />
-                                    <path
-                                        d="M12 5.8c1.5 0 2.9.5 3.9 1.6l2.9-2.9A9.7 9.7 0 0 0 12 2 10 10 0 0 0 3.2 7.3l3.5 2.7c.7-2.3 2.8-4.2 5.3-4.2z"
-                                        fill="#EA4335"
-                                    />
-                                </svg>
-                            </button>
-
-                            <button
-                                className="flex h-14 items-center justify-center rounded-[18px] border border-[#e5e6ec] bg-white shadow-[0_8px_20px_rgba(28,24,60,0.08)] cursor-pointer"
-                                aria-label="Continue with Facebook"
-                                type="button"
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
-                                    <circle cx="12" cy="12" r="10" fill="#1877F2" />
-                                    <path
-                                        d="M13.1 7.6h2V5.1c-.3 0-1.4-.1-2.6-.1-2.6 0-4.3 1.6-4.3 4.5v2.1H5.9v2.8h2.3v4.5h3.2v-4.5h2.4l.4-2.8h-2.8V9.9c0-1 .3-1.7 1.7-1.7z"
-                                        fill="#ffffff"
-                                    />
-                                </svg>
-                            </button>
-                        </div> */}
                     </div>
                 </section>
             </div>

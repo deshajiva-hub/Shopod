@@ -80,7 +80,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-black text-secondary-light uppercase tracking-widest">Bank Account Number</label>
-                            <input type="password" underline className="input-field font-bold" defaultValue="************1234" />
+                            <input type="password" className="input-field font-bold" defaultValue="************1234" />
                         </div>
                     </div>
                 </div>

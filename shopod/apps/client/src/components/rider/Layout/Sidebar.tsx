@@ -27,11 +27,16 @@ const accountItems = [
     { name: "Support Center", icon: HelpCircle, href: "/rider/support" },
 ];
 
-export default function RiderSidebar() {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export default function RiderSidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
 
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col z-50">
+        <aside className={`w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-gray-100 bg-[#F8F9FB]/50">
                 <div className="flex items-center gap-2">

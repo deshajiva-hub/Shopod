@@ -182,7 +182,7 @@ export default function EarningsPage() {
                                 <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Amount</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody className="divide-y divide-gray-50 ">
                             <TransactionRow type="Withdrawal" refId="#WDR-9921" date="Oct 16, 2025 • 10:30 AM" status="completed" amount="-₹2,450" />
                             <TransactionRow type="Order Payout" refId="#ORD-8821" date="Oct 16, 2025 • 09:15 AM" status="completed" amount="+₹65.00" />
                             <TransactionRow type="Incentive" refId="#INC-1221" date="Oct 15, 2025 • 11:59 PM" status="completed" amount="+₹450.00" />
